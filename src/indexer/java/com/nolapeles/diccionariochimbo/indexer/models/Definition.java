@@ -1,9 +1,22 @@
 package com.nolapeles.diccionariochimbo.indexer.models;
 
+import org.bson.types.ObjectId;
+
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Reference;
+
+@Entity
 public class Definition {
-	public int id;
+	@Id 
+	private ObjectId id;
+	
+	@Reference 
 	public Tweep author;
+
+	@Reference 
 	public Word word;
+	
 	public String definition;
 	public long indexed_date;
 	public int score;
