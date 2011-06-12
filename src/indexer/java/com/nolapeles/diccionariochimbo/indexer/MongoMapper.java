@@ -1,6 +1,8 @@
 package com.nolapeles.diccionariochimbo.indexer;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
@@ -38,6 +40,7 @@ public class MongoMapper {
 		}
 		
 		morphia = new Morphia();
+		
 		mapModels();
 		
 		dataStore = morphia.createDatastore(mongo, "dc");
@@ -48,8 +51,8 @@ public class MongoMapper {
 	}
 	
 	private void mapModels() {
-		morphia.map(Word.class);
 		morphia.map(Tweep.class);
+		morphia.map(Word.class);
 		morphia.map(Definition.class);
 	}
 	
@@ -71,5 +74,47 @@ public class MongoMapper {
 	
 	public Datastore getDatastore() {
 		return dataStore;
+	}
+	
+	private static void testCreateTweeps() {
+		MongoMapper mongoMapper = MongoMapper.instance();
+		
+		Tweep t1 = new Tweep();
+		t1.description = "tweep description";
+		t1.location = "the location";
+		t1.screen_name = "tweeper";
+		
+		Word w1 = new Word();
+		w1.word = "PABELLON";
+		
+		Definition d1 = new Definition();
+		d1.author = t1;
+		d1.definition = "Lo que le dijo Paul a John";
+		d1.indexed_date = System.currentTimeMillis();
+		d1.numFails = 0;
+		d1.numWins = 5;
+		
+		w1.definitions = new ArrayList<Definition>();
+		w1.definitions.add(d1);
+		
+		Datastore ds = mongoMapper.getDatastore();
+		
+		
+		ds.save(t1);
+		ds.save(d1);
+		ds.save(w1);
+				
+		
+		
+		
+		List<Tweep> found = ds.find(Tweep.class).asList();
+		for (Tweep t : found) {
+			System.out.println(t);
+		}
+		
+	}
+	
+	public static void main(String[] args) {
+		testCreateTweeps();
 	}
 }

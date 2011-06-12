@@ -13,9 +13,6 @@ public class Definition {
 	
 	@Reference 
 	public Tweep author;
-
-	@Reference 
-	public Word word;
 	
 	public String definition;
 	public long indexed_date;
