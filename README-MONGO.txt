@@ -60,6 +60,6 @@ Some useful commands:
 > db.dropDatabase //will show the javascript code of that method.
 
 // DROP TABLE
-> Tweep.drop()
+> db.Tweep.drop()
 
 For more info http://www.mongodb.org/display/DOCS/SQL+to+Mongo+Mapping+Chart
