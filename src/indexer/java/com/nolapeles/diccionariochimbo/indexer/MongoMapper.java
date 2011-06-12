@@ -84,6 +84,11 @@ public class MongoMapper {
 		t1.location = "the location";
 		t1.screen_name = "tweeper";
 		
+		Tweep t2 = new Tweep();
+		t2.description = "another tweep";
+		t2.location = "bottom of the sea";
+		t2.screen_name = "bob_sponge";
+		
 		Word w1 = new Word();
 		w1.word = "PABELLON";
 		
@@ -93,19 +98,26 @@ public class MongoMapper {
 		d1.indexed_date = System.currentTimeMillis();
 		d1.numFails = 0;
 		d1.numWins = 5;
+
+		Definition d2 = new Definition();
+		d2.author = t2;
+		d2.definition = "Para alguien muy grande que es bello.";
+		d2.indexed_date = System.currentTimeMillis();
+		d2.numFails = 9;
+		d2.numWins = 0;
 		
 		w1.definitions = new ArrayList<Definition>();
 		w1.definitions.add(d1);
+		w1.definitions.add(d2);
 		
 		Datastore ds = mongoMapper.getDatastore();
 		
-		
 		ds.save(t1);
+		ds.save(t2);
 		ds.save(d1);
+		ds.save(d2);
+		
 		ds.save(w1);
-				
-		
-		
 		
 		List<Tweep> found = ds.find(Tweep.class).asList();
 		for (Tweep t : found) {

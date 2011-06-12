@@ -4,6 +4,7 @@ import org.bson.types.ObjectId;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Indexed;
 import com.google.code.morphia.annotations.Reference;
 
 @Entity
@@ -15,6 +16,8 @@ public class Definition {
 	public Tweep author;
 	
 	public String definition;
+	
+	@Indexed
 	public long indexed_date;
 	public int score;
 	public int numRetweets;

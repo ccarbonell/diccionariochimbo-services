@@ -4,6 +4,7 @@ import org.bson.types.ObjectId;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Indexed;
 
 /**
  * POJO representing a Twitter user.
@@ -21,6 +22,8 @@ public class Tweep {
 	private ObjectId id;
 	
 	public String name;
+
+	@Indexed
 	public String screen_name;
 	public String location;
 	public String description;
