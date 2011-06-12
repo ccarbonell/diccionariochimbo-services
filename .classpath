@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="indexer/|indexer/java/|indexer/java/" kind="src" path="src"/>
+	<classpathentry excluding="indexer/|indexer/java/|indexer/java/|mungbean/java/|mungbean/java/|mungbean/|mungbean/|mungbean/java/|mungbean-java/java/|mungbean-java/java/" kind="src" path="src"/>
 	<classpathentry kind="src" path="src/indexer/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
