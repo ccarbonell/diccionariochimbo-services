@@ -23,4 +23,10 @@ public class Definition {
 	public int numRetweets;
 	public int numWins;
 	public int numFails;
+	
+	public int updateScore() {
+		score = numRetweets*Scores.RT_POINTS + numWins*Scores.WIN_POINTS + numFails*Scores.FAIL_POINTS;
+		return score;
+	}
+	
 }

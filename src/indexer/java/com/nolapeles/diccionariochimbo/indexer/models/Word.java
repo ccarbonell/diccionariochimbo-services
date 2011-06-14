@@ -1,12 +1,16 @@
 package com.nolapeles.diccionariochimbo.indexer.models;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.bson.types.ObjectId;
 
+import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Indexed;
+import com.google.code.morphia.annotations.NotSaved;
 import com.google.code.morphia.annotations.Reference;
 
 @Entity
@@ -17,9 +21,29 @@ public class Word {
 	@Indexed
 	public String word;
 	
-	@Reference
+	@Embedded
 	public List<Definition> definitions;
 	
-	@Reference
-	public Definition best_definition;
+	@NotSaved
+	private Comparator<Definition> BEST_DEFINITION_COMPARATOR = new Comparator<Definition>() {
+
+		@Override
+		public int compare(Definition a, Definition b) {
+			return a.score - b.score;
+		}
+	};
+	
+	public Definition getBestDefinition() {
+		if (definitions.size()==1) {
+			return definitions.get(0);
+		}
+		
+		for (Definition d : definitions) {
+			d.updateScore();
+		}
+		
+		Collections.sort(definitions, BEST_DEFINITION_COMPARATOR);
+		
+		return definitions.get(0);
+	}
 }
