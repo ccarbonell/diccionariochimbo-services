@@ -2,6 +2,8 @@ package com.nolapeles.diccionariochimbo.indexer;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.code.morphia.Datastore;
@@ -110,6 +112,15 @@ public class MongoMapper {
 		w1.definitions.add(d1);
 		w1.definitions.add(d2);
 		
+		Word w2 = new Word();
+		w2.word = "VENTILADOR";
+		
+		Definition d3 = new Definition();
+		d3.author = t2;
+		d3.definition = "Lo que una prostituta le dice a un cliente cachondo.";
+		
+		w2.definitions = Arrays.asList(d3);
+		
 		Datastore ds = mongoMapper.getDatastore();
 		
 		ds.save(t1);
@@ -118,6 +129,10 @@ public class MongoMapper {
 		ds.save(d2);
 		
 		ds.save(w1);
+
+		ds.save(d3);
+		ds.save(w2);
+
 		
 		List<Tweep> found = ds.find(Tweep.class).asList();
 		for (Tweep t : found) {

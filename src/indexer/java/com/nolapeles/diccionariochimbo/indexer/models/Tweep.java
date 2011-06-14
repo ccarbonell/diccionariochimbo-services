@@ -25,6 +25,10 @@ public class Tweep {
 
 	@Indexed
 	public String screen_name;
+	
+	@Indexed
+	public int user_id;
+	
 	public String location;
 	public String description;
 	public String profile_image_url;
