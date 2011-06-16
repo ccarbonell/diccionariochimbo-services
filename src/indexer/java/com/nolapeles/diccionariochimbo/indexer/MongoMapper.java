@@ -3,7 +3,6 @@ package com.nolapeles.diccionariochimbo.indexer;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import com.google.code.morphia.Datastore;
@@ -11,6 +10,7 @@ import com.google.code.morphia.Morphia;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.nolapeles.diccionariochimbo.indexer.models.Definition;
+import com.nolapeles.diccionariochimbo.indexer.models.Settings;
 import com.nolapeles.diccionariochimbo.indexer.models.Tweep;
 import com.nolapeles.diccionariochimbo.indexer.models.Word;
 
@@ -26,26 +26,26 @@ public class MongoMapper {
 
 	private static MongoMapper INSTANCE;
 
-	private Mongo mongo;
+	private Mongo _mongo;
 	
-	private Morphia morphia;
+	private Morphia _morphia;
 
-	private Datastore dataStore;
+	private Datastore _dataStore;
 	
 	private MongoMapper(String host, int port) {
 		try {
-			mongo = new Mongo(host, port);
+			_mongo = new Mongo(host, port);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (MongoException e) {
 			e.printStackTrace();
 		}
 		
-		morphia = new Morphia();
+		_morphia = new Morphia();
 		
 		mapModels();
 		
-		dataStore = morphia.createDatastore(mongo, "dc");
+		_dataStore = _morphia.createDatastore(_mongo, "dc");
 	}
 	
 	private MongoMapper() {
@@ -53,9 +53,10 @@ public class MongoMapper {
 	}
 	
 	private void mapModels() {
-		morphia.map(Tweep.class);
-		morphia.map(Word.class);
-		morphia.map(Definition.class);
+		_morphia.map(Tweep.class);
+		_morphia.map(Word.class);
+		_morphia.map(Definition.class);
+		_morphia.map(Settings.class);
 	}
 	
 	public static MongoMapper instance() {
@@ -71,11 +72,11 @@ public class MongoMapper {
 	}
 	
 	public Morphia getMorphia() {
-		return morphia;
+		return _morphia;
 	}
 	
 	public Datastore getDatastore() {
-		return dataStore;
+		return _dataStore;
 	}
 	
 	private static void testCreateTweeps() {

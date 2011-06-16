@@ -17,7 +17,7 @@ public class Tweet {
 	public ObjectId id;
 	
 	@Indexed
-	public int tweet_id;
+	public long tweet_id;
 	
 	public String text;
 	
