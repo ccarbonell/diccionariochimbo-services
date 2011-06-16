@@ -21,16 +21,13 @@ public class Tweep {
 	@Id 
 	private ObjectId id;
 	
-	public String name;
-
 	@Indexed
 	public String screen_name;
 	
 	@Indexed
-	public int user_id;
+	public long user_id;
 	
 	public String location;
-	public String description;
 	public String profile_image_url;
-	public String url;
+
 }

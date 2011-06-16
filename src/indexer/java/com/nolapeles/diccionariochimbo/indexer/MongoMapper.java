@@ -83,12 +83,10 @@ public class MongoMapper {
 		MongoMapper mongoMapper = MongoMapper.instance();
 		
 		Tweep t1 = new Tweep();
-		t1.description = "tweep description";
 		t1.location = "the location";
 		t1.screen_name = "tweeper";
 		
 		Tweep t2 = new Tweep();
-		t2.description = "another tweep";
 		t2.location = "bottom of the sea";
 		t2.screen_name = "bob_sponge";
 		
