@@ -46,7 +46,7 @@ public class Settings {
 		INSTANCE = new Settings();
 
 		INSTANCE.SITE_NAME = "DiccionarioChimbo.com";
-		INSTANCE.TWEET_FETCHER_LAST_TWEET_ID = 0;
+		INSTANCE.TWEET_FETCHER_LAST_TWEET_ID = -1;
 		INSTANCE.SEARCH_HASHTAG = "#diccionariochimbo";
 		
 		return INSTANCE;

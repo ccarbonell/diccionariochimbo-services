@@ -25,6 +25,7 @@ public class TweetFetcher {
 	private Datastore _ds;
 
 	private Settings _settings;
+	private Query _query;
 
 	public TweetFetcher() {
 		_twitter = new TwitterFactory().getInstance();
@@ -37,20 +38,18 @@ public class TweetFetcher {
 	 * Search and store the newest tweets.
 	 */
 	public void fetchTweets() {
-		Query query = new Query(_settings.SEARCH_HASHTAG);
-		prepareQuery(query, -1);
-
+		_query = new Query(_settings.SEARCH_HASHTAG);
 
 		List<Tweet> tweets = new ArrayList<Tweet>();
-		int page = 0;
-
+		int page = 1;
+		
 		// search until you can't search no more
-		while (searchTweetPage(query, tweets, page++)) { }
+		while (searchTweetPage(tweets, page++)) {  }
 
 		System.out.println("///////////////////////////////////////////////////////////\n\n");
 		
 		System.out.println(tweets.size() + " tweets found. Page: "
-				+ query.getPage());
+				+ _query.getPage());
 
 		for (Tweet tweet : tweets) {
 			System.out.println(tweet.getId() + " - @" + tweet.getFromUser() + ": \"" + tweet.getText() + "\"");
@@ -62,27 +61,28 @@ public class TweetFetcher {
 	 * 
 	 * This method checks the search result
 	 * 
-	 * @param query  - The Query we configured.
+	 * @param _query  - The Query we configured.
 	 * @param tweets - The list where we keep adding the results.
 	 * @param page
 	 * 
 	 * return true if it found anything else. False if it found 0 tweets for this page.
 	 */
-	private boolean searchTweetPage(Query query, List<Tweet> tweets, int page) {
+	private boolean searchTweetPage(List<Tweet> tweets, int page) {
 		boolean foundTweets = false;
 		
 		QueryResult result = null;
 		try {
 			//turn the page
-			query.setPage(page);
+			prepareQuery(page);
 			
 			//Search!
-			result = _twitter.search(query);
+			result = _twitter.search(_query);
 			
 			//Update get max id
 			if (result.getMaxId() > _settings.TWEET_FETCHER_LAST_TWEET_ID) {
 				_settings.TWEET_FETCHER_LAST_TWEET_ID = result.getMaxId();
 				_settings.save();
+				System.out.println("new max id: " + result.getMaxId());
 			}
 			
 			//add results to the list we'll persist at the end.
@@ -99,12 +99,12 @@ public class TweetFetcher {
 		
 	}
 
-	private void prepareQuery(Query query, int pageNumber) {
-		//query.setSinceId(_settings.TWEET_FETCHER_LAST_TWEET_ID);
+	private void prepareQuery(int pageNumber) {
+		_query.setSinceId(_settings.TWEET_FETCHER_LAST_TWEET_ID);
 		//query.setMaxId(_settings.TWEET_FETCHER_LAST_TWEET_ID);
-		query.setResultType(Query.MIXED);
-		query.setRpp(IndexerConstants.SEARCH_RESULTS_PER_PAGE);
-		query.setPage(pageNumber);
+		_query.setResultType(Query.MIXED);
+		_query.setRpp(IndexerConstants.SEARCH_RESULTS_PER_PAGE);
+		_query.setPage(pageNumber);
 	}
 
 	public static void main(String[] args) {
