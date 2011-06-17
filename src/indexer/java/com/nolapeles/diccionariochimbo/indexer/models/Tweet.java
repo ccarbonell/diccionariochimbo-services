@@ -23,4 +23,13 @@ public class Tweet {
 	
 	@Reference
 	public Tweep tweep;
+	
+	public boolean processed;
+	
+	@Override
+	public String toString() {
+		String tweep_str = (tweep == null) ? "null" : tweep.toString();
+		
+		return "[Tweet] {id: "+tweet_id+",\n\ttext: "+text+",\n\ttweep: "+tweep_str+"}";
+	}
 }

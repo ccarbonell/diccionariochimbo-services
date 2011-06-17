@@ -26,19 +26,22 @@ public class TweetFetcher {
 
 	private Twitter _twitter;
 	private Datastore _ds;
-	
+
 	/** Where we'll keep the tweets (models) that'll be saved */
 	private List<com.nolapeles.diccionariochimbo.indexer.models.Tweet> _modelTweets;
-	
-	/** We'll keep a cache of users that we have already in the database. If we don't have them we'll insert them */
-	private Map<Long,Tweep> _seenTweeps;
+
+	/**
+	 * We'll keep a cache of users that we have already in the database. If we
+	 * don't have them we'll insert them
+	 */
+	private Map<Long, Tweep> _seenTweeps;
 
 	private Settings _settings;
 	private Query _query;
 
 	public TweetFetcher() {
 		_modelTweets = new ArrayList<com.nolapeles.diccionariochimbo.indexer.models.Tweet>();
-		_seenTweeps = new HashMap<Long,Tweep>();
+		_seenTweeps = new HashMap<Long, Tweep>();
 		_twitter = new TwitterFactory().getInstance();
 		_ds = MongoMapper.instance().getDatastore();
 		_settings = Settings.instance();
@@ -51,10 +54,11 @@ public class TweetFetcher {
 		_query = new Query(_settings.SEARCH_HASHTAG);
 
 		int page = 1;
-		
+
 		// search until you can't search no more
-		while (searchTweetPage(page++)) {  }
-		
+		while (searchTweetPage(page++)) {
+		}
+
 		if (_modelTweets.size() > 0) {
 			_ds.save(_modelTweets);
 		}
@@ -65,76 +69,85 @@ public class TweetFetcher {
 	 * 
 	 * This method checks the search result
 	 * 
-	 * @param _query  - The Query we configured.
-	 * @param _modelTweets - The list where we keep adding the results.
+	 * @param _query
+	 *            - The Query we configured.
+	 * @param _modelTweets
+	 *            - The list where we keep adding the results.
 	 * @param page
 	 * 
-	 * return true if it found anything else. False if it found 0 tweets for this page.
+	 *            return true if it found anything else. False if it found 0
+	 *            tweets for this page.
 	 */
 	private boolean searchTweetPage(int page) {
-		boolean foundTweets = false;
-		
+
 		QueryResult result = null;
 		try {
-			//turn the page
+			// turn the page
 			prepareQuery(page);
-			
-			//Search!
+
+			// Search!
 			result = _twitter.search(_query);
-			
-			//Update get max id
+
+			// Update get max id
 			if (result.getMaxId() > _settings.TWEET_FETCHER_LAST_TWEET_ID) {
 				_settings.TWEET_FETCHER_LAST_TWEET_ID = result.getMaxId();
 				_settings.save();
 				System.out.println("new max id: " + result.getMaxId());
 			}
-			
-			//add results to the list we'll persist at the end.
+
+			// add results to the list we'll persist at the end.
 			List<Tweet> pageTweets = result.getTweets();
+			// found anything?
+
+			if (pageTweets.size() == 0) {
+				return false;
+			}
+
 			for (Tweet t : pageTweets) {
 				com.nolapeles.diccionariochimbo.indexer.models.Tweet tweet = new com.nolapeles.diccionariochimbo.indexer.models.Tweet();
 				tweet.text = t.getText();
 				tweet.tweet_id = t.getId();
-				
-				//user's already in memory
+				tweet.processed = false;
+
+				// user's already in memory
 				if (_seenTweeps.containsKey(t.getFromUserId())) {
 					tweet.tweep = _seenTweeps.get(t.getFromUserId());
+					System.out.println("Got tweep from memory: " + tweet.tweep);
 				} else {
-					//try to search it in the database first.
-					Tweep persistedTweep = _ds.find(Tweep.class, "user_id", t.getFromUserId()).get();
-					
-					//don't have it yet, let's persist it
+					// try to search it in the database first.
+					Tweep persistedTweep = _ds.find(Tweep.class, "user_id",
+							t.getFromUserId()).get();
+
+					// don't have it yet, let's persist it
 					if (persistedTweep == null) {
 						persistedTweep = new Tweep();
 						persistedTweep.user_id = t.getFromUserId();
 						persistedTweep.location = t.getLocation();
-						persistedTweep.profile_image_url = t.getProfileImageUrl();
+						persistedTweep.profile_image_url = t
+								.getProfileImageUrl();
 						persistedTweep.screen_name = t.getFromUser();
-						
+
 						_ds.save(persistedTweep);
 					}
 					
-					//once found we add it to the _seenTweetps structure
+					tweet.tweep = persistedTweep;
+
+					// once found we add it to the _seenTweetps structure
 					_seenTweeps.put(t.getFromUserId(), persistedTweep);
 				}
-				
+
 				_modelTweets.add(tweet);
 			}
-			
-			
-			//found anything?
-			foundTweets = pageTweets.size() > 0;
 		} catch (TwitterException e) {
 			e.printStackTrace();
 		}
-		
-		return foundTweets;
-		
+
+		return true;
+
 	}
 
 	private void prepareQuery(int pageNumber) {
 		_query.setSinceId(_settings.TWEET_FETCHER_LAST_TWEET_ID);
-		//query.setMaxId(_settings.TWEET_FETCHER_LAST_TWEET_ID);
 		_query.setResultType(Query.MIXED);
 		_query.setRpp(IndexerConstants.SEARCH_RESULTS_PER_PAGE);
 		_query.setPage(pageNumber);
@@ -143,5 +156,26 @@ public class TweetFetcher {
 	public static void main(String[] args) {
 		TweetFetcher fetcher = new TweetFetcher();
 		fetcher.fetchTweets();
+		fetcher.verifyTweetsAndTweeps();
+	}
+
+	private void verifyTweetsAndTweeps() {
+		com.google.code.morphia.query.Query<com.nolapeles.diccionariochimbo.indexer.models.Tweet> query = _ds
+				.createQuery(
+						com.nolapeles.diccionariochimbo.indexer.models.Tweet.class);
+
+		Iterable<com.nolapeles.diccionariochimbo.indexer.models.Tweet> list = query
+				.fetch();
+		
+		for (com.nolapeles.diccionariochimbo.indexer.models.Tweet t : list) {
+			if (t.tweep != null) {
+				System.out.println("@"+t.tweep.screen_name+": " + t.text);
+			} else {
+				//System.out.println("==");
+				System.out.println("Tweep for " + t.tweet_id + " is null");
+				//System.out.println(t);
+				//System.out.println("==");
+			}
+		}
 	}
 }

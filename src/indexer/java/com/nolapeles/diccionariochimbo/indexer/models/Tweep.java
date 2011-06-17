@@ -29,5 +29,14 @@ public class Tweep {
 	
 	public String location;
 	public String profile_image_url;
+	
+	@Override
+	public String toString() {
+		return "[Tweep] {user_id: "+user_id+
+			",\n\tscreen_name: "+screen_name+
+			",\n\tlocation: "+location+
+			",\n\tprofile_image_url: "+profile_image_url+"}";
+		
+	}
 
 }
