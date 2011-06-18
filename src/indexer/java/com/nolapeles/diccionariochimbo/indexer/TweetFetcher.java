@@ -60,7 +60,10 @@ public class TweetFetcher {
 		}
 
 		if (_modelTweets.size() > 0) {
+			System.out.println("TweetFetcher.fetchTweets() -> Saving "+ _modelTweets.size() +" New Tweets");
 			_ds.save(_modelTweets);
+		} else {
+			System.out.println("TweetFetcher.fetchTweets() -> No new Tweets.");
 		}
 	}
 
@@ -167,9 +170,11 @@ public class TweetFetcher {
 		Iterable<com.nolapeles.diccionariochimbo.indexer.models.Tweet> list = query
 				.fetch();
 		
+		int n=0;
 		for (com.nolapeles.diccionariochimbo.indexer.models.Tweet t : list) {
 			if (t.tweep != null) {
-				System.out.println("@"+t.tweep.screen_name+": " + t.text);
+				//System.out.println("@"+t.tweep.screen_name+": " + t.text);
+				n++;
 			} else {
 				//System.out.println("==");
 				System.out.println("Tweep for " + t.tweet_id + " is null");
@@ -177,5 +182,6 @@ public class TweetFetcher {
 				//System.out.println("==");
 			}
 		}
+		System.out.println("TweetFetcher.verifyTweetsAndTweeps(): " + n + " valid Tweets.");
 	}
 }
