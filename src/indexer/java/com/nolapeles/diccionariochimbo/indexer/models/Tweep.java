@@ -30,6 +30,10 @@ public class Tweep {
 	public String location;
 	public String profile_image_url;
 	
+	public int social_score;
+	public int content_score;
+	public int bonus_score;
+	
 	@Override
 	public String toString() {
 		return "[Tweep] {user_id: "+user_id+
