@@ -15,7 +15,8 @@ public class TweetProcessor {
 	
 	public final static Pattern PATTERN_TWEEP = Pattern.compile("@\\w*[\\:|\\.]?\\s?");
 	public final static Pattern PATTERN_HASHTAG = Pattern.compile("(#\\w*[\\:\\.]?\\s?)");
-	
+	private final static Pattern PATTERN_WORD_DEFINITION = Pattern.compile("\\\"?(\\S*)\\\"?\\:\\s?(.*)");
+
 	private Datastore _ds;
 	
 	public TweetProcessor() {
@@ -73,6 +74,8 @@ public class TweetProcessor {
 	 */
 	private String getCleanTweetText(Tweet tweet) {
 		//Remove whatever reply text there might be
+		System.out.println("BEFORE: [" + tweet.text + "]");
+		
 		String text = new String(tweet.text);
 		if (text.contains("<<")) {
 			text = text.substring(0,text.indexOf("<<"));
@@ -82,15 +85,13 @@ public class TweetProcessor {
 			text = text.substring(0,text.indexOf(">>"));
 		}
 
-		System.out.println("BEFORE: [" + text + "]");
-
 		//Remove @users
 		text = PATTERN_TWEEP.matcher(text).replaceAll("");
 		
 		//Let's remove RTs
 		text = text.replaceAll("RT", "");
 		
-		//Remove -->
+		//Remove "-->"
 		text = text.replaceAll("-->","");
 		
 		text = PATTERN_HASHTAG.matcher(text).replaceAll("");
@@ -98,8 +99,7 @@ public class TweetProcessor {
 
 		
 		//We extract now the WORD and the DEFINITION and see if we have ourselves a definition.
-		Pattern p = Pattern.compile("(\\w*)\\:\\s?(.*)");
-		Matcher matcher = p.matcher(text);
+		Matcher matcher = PATTERN_WORD_DEFINITION.matcher(text);
 		if (matcher.matches()) {
 			text = matcher.group(1).toUpperCase()+": "+matcher.group(2).toLowerCase();
 		} else {
