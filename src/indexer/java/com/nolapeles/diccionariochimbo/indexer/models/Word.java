@@ -10,8 +10,7 @@ import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Indexed;
-import com.google.code.morphia.annotations.NotSaved;
-import com.google.code.morphia.annotations.Reference;
+import com.google.code.morphia.annotations.Transient;
 
 @Entity
 public class Word {
@@ -24,7 +23,7 @@ public class Word {
 	@Embedded
 	public List<Definition> definitions;
 	
-	@NotSaved
+	@Transient
 	private Comparator<Definition> BEST_DEFINITION_COMPARATOR = new Comparator<Definition>() {
 
 		@Override
@@ -46,4 +45,5 @@ public class Word {
 		
 		return definitions.get(0);
 	}
+	
 }

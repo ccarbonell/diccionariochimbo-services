@@ -20,11 +20,11 @@ public class Tweet {
 	public long tweet_id;
 	
 	public String text;
+
+	public boolean processed;
 	
 	@Reference
 	public Tweep tweep;
-	
-	public boolean processed;
 	
 	@Override
 	public String toString() {

@@ -39,8 +39,7 @@ public class Tweep {
 		return "[Tweep] {user_id: "+user_id+
 			",\n\tscreen_name: "+screen_name+
 			",\n\tlocation: "+location+
-			",\n\tprofile_image_url: "+profile_image_url+"}";
-		
+			",\n\tprofile_image_url: "+profile_image_url+"}";		
 	}
 
 }

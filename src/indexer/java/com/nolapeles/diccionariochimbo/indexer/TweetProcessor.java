@@ -1,12 +1,20 @@
 package com.nolapeles.diccionariochimbo.indexer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.nolapeles.diccionariochimbo.indexer.models.Definition;
+import com.nolapeles.diccionariochimbo.indexer.models.Tweep;
 import com.nolapeles.diccionariochimbo.indexer.models.Tweet;
+import com.nolapeles.diccionariochimbo.indexer.models.Word;
 
 /*
  * Class to process stored tweets into Word, Definitions and scores for players.
@@ -15,12 +23,14 @@ public class TweetProcessor {
 	
 	public final static Pattern PATTERN_TWEEP = Pattern.compile("@\\w*[\\:|\\.]?\\s?");
 	public final static Pattern PATTERN_HASHTAG = Pattern.compile("(#\\w*[\\:\\.]?\\s?)");
-	private final static Pattern PATTERN_WORD_DEFINITION = Pattern.compile("\\\"?(\\S*)\\\"?\\:\\s?(.*)");
+	private final static Pattern PATTERN_WORD_DEFINITION = Pattern.compile(".*?\\\"?([\\S]*)\\\"?\\:\\s?(.*)");
 
 	private Datastore _ds;
+	private Map<Long, Tweep> _seenTweeps;
 	
 	public TweetProcessor() {
 		_ds = MongoMapper.instance().getDatastore();
+		_seenTweeps = new HashMap<Long, Tweep>();
 	}
 	
 	public void processTweets() {
@@ -51,21 +61,100 @@ public class TweetProcessor {
 		
 		String word_definition_text = getCleanTweetText(tweet);
 		
-		//We have got ourselves an attempt of a definition
-		if (rtCount == 0) {
-			//extract word and definition
-			
-		} if (rtCount == 1) {
-			//it's possible that it's a RT of a definition we don't yet have
-			//the @name on the tweet will be the author if that's the case.
-			//if we don't have @name in our db, we'll have to fetch it.
+		Word word = new Word();
+		Definition definition = new Definition();
+		
+		extractWordAndDefinition(word_definition_text, word, definition);
+		
+		//search for the word
+		Query<Word> wordQuery = _ds.createQuery(Word.class);
+		List<Word> foundWords = wordQuery.filter("word", word.word).asList();
+
+		//It's a new word.
+		if (foundWords.size()==0) {
+			saveNewWordAndDefinition(tweet, potentialAuthor, rtCount, word,
+					definition);
 		} else {
-			//add points for the user that sent this RT
+			saveDefinition(tweet,rtCount,word,definition);
 		}
 		
 		//System.out.println(tweet.text);
 	}
+
+	private void saveDefinition(Tweet tweet, int rtCount, Word word,
+			Definition definition) {
+
+		List<Definition> definitions = word.definitions;
+		
+		if (definitions==null || definitions.size()==0) {
+			word.definitions = new ArrayList<Definition>();
+			word.definitions.add(definition);
+			
+		} else {
+			//new definition indeed
+			if (!word.definitions.contains(definition)) {
+				word.definitions.add(definition);
+			} else {
+				Definition wordFromDB = word.definitions.get(word.definitions.indexOf(definition));
+				wordFromDB.numRetweets++;
+			}
+		}
+		
+		_ds.save(word);
+	}
+
+	public void saveNewWordAndDefinition(Tweet tweet, String potentialAuthor,
+			int rtCount, Word word, Definition definition) {
+		//This looks like it's not the owner of the tweet.
+		if (rtCount == 1) {
+			if (potentialAuthor!=null) {
+				//TODO: Search for that Tweep and use it as the owner of the definition.
+				//tweet.tweep = fetchTweepByName(potentialAuthor);
+			} else {
+				
+			}
+		}
+		
+		if (tweet.tweep != null) {
+			definition.tweep = tweet.tweep;
+			definition.indexed_date = System.currentTimeMillis();
+			definition.lastScoreUpdateTimestamp = System.currentTimeMillis();
+			definition.numFails=0;
+			definition.numRetweets = 0;
+			definition.numWins = 0;
+			definition.numFails = 0;
+			definition.score = 0;
+		}
+		
+		word.definitions = Arrays.asList(definition);
+		
+		_ds.save(word);
+	}
+
+	/**
+	 * Given a "clean" tweet, it'll extract the word and the definition,
+	 * and update the given object references.
+	 * 
+	 * @param text - text to parse
+	 * @param w - target word object
+	 * @param d - target definition object
+	 */
+	private void extractWordAndDefinition(String text,
+			Word w, Definition d) {
+		
+		//We extract now the WORD and the DEFINITION and see if we have ourselves a definition.
+		Matcher matcher = PATTERN_WORD_DEFINITION.matcher(text);
+		if (matcher.matches()) {
+			w.word = matcher.group(1).toUpperCase().replaceAll("\\\"", "");
+			d.definition = matcher.group(2).toLowerCase();
+			
+			System.out.println("+ ["+w.word+"] -> ["+d.definition+"]");
+		} else {
+			System.out.println("! " + text);
+		}
 	
+	}
+
 	/**
 	 * Remove everything that has nothing to do with the word or definition.
 	 * 
@@ -74,9 +163,11 @@ public class TweetProcessor {
 	 */
 	private String getCleanTweetText(Tweet tweet) {
 		//Remove whatever reply text there might be
-		System.out.println("BEFORE: [" + tweet.text + "]");
 		
 		String text = new String(tweet.text);
+		
+		System.out.println("BEFORE: [" + text + "]");
+		
 		if (text.contains("<<")) {
 			text = text.substring(0,text.indexOf("<<"));
 		}
@@ -96,17 +187,7 @@ public class TweetProcessor {
 		
 		text = PATTERN_HASHTAG.matcher(text).replaceAll("");
 		text = text.trim();
-
 		
-		//We extract now the WORD and the DEFINITION and see if we have ourselves a definition.
-		Matcher matcher = PATTERN_WORD_DEFINITION.matcher(text);
-		if (matcher.matches()) {
-			text = matcher.group(1).toUpperCase()+": "+matcher.group(2).toLowerCase();
-		} else {
-			System.out.print("!");
-		}
-		
-		System.out.println("AFTER: [" + text + "]\n");
 		return text;
 	}
 
