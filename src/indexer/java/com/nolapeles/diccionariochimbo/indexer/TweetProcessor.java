@@ -9,6 +9,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.User;
+
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.nolapeles.diccionariochimbo.indexer.models.Definition;
@@ -24,13 +29,22 @@ public class TweetProcessor {
 	public final static Pattern PATTERN_TWEEP = Pattern.compile("@\\w*[\\:|\\.]?\\s?");
 	public final static Pattern PATTERN_HASHTAG = Pattern.compile("(#\\w*[\\:\\.]?\\s?)");
 	private final static Pattern PATTERN_WORD_DEFINITION = Pattern.compile(".*?\\\"?([\\S]*)\\\"?\\:\\s?(.*)");
+	
+	private final static Pattern PATTERN_TWEEP_AFTER_RT = Pattern.compile("(.*)?RT.*@(\\w*)");
 
 	private Datastore _ds;
+	
+	private Twitter _twitter;
+	
+	@SuppressWarnings("unused")
 	private Map<Long, Tweep> _seenTweeps;
+	
+	private final static boolean DEBUG = true;
 	
 	public TweetProcessor() {
 		_ds = MongoMapper.instance().getDatastore();
 		_seenTweeps = new HashMap<Long, Tweep>();
+		_twitter = new TwitterFactory().getInstance();;
 	}
 	
 	public void processTweets() {
@@ -100,7 +114,9 @@ public class TweetProcessor {
 			}
 		}
 		
-		_ds.save(word);
+		if (!DEBUG) {
+			_ds.save(word);
+		}
 	}
 
 	public void saveNewWordAndDefinition(Tweet tweet, String potentialAuthor,
@@ -108,8 +124,8 @@ public class TweetProcessor {
 		//This looks like it's not the owner of the tweet.
 		if (rtCount == 1) {
 			if (potentialAuthor!=null) {
-				//TODO: Search for that Tweep and use it as the owner of the definition.
-				//tweet.tweep = fetchTweepByName(potentialAuthor);
+				System.out.println("Tweep is potential author -> " + potentialAuthor);
+				tweet.tweep = fetchTweepByName(potentialAuthor);
 			} else {
 				
 			}
@@ -128,7 +144,25 @@ public class TweetProcessor {
 		
 		word.definitions = Arrays.asList(definition);
 		
-		_ds.save(word);
+		if (!DEBUG) {
+			_ds.save(word);
+		}
+	}
+
+	private Tweep fetchTweepByName(String potentialAuthor) {
+		Tweep tweep = null;
+		
+		try {
+			User user = _twitter.showUser(potentialAuthor);
+			tweep = new Tweep();
+			tweep.location = user.getLocation();
+			tweep.profile_image_url = user.getProfileImageURL().toString();
+			tweep.screen_name = potentialAuthor;
+			tweep.user_id = user.getId();
+		} catch (TwitterException e) {
+			e.printStackTrace();
+		}
+		return tweep;
 	}
 
 	/**
@@ -204,7 +238,16 @@ public class TweetProcessor {
 	}
 
 	private String getPotentialAuthor(Tweet tweet) {
-		// TODO Auto-generated method stub
+		//If it's a RT, then the author is not tweet.tweep.
+		if (tweet.text.contains("RT")) {
+			//get the nickname right after RT
+			Matcher matcher = PATTERN_TWEEP_AFTER_RT.matcher(tweet.text);
+			if (matcher.matches()) {
+				String group1 = matcher.group(1);
+				String group2 = matcher.group(2);
+			}
+			
+		}
 		return null;
 	}
 
@@ -214,8 +257,7 @@ public class TweetProcessor {
 	 */
 	private void normalizeTweet(Tweet tweet) {
 		//make sure the delimitor is right next to the word
-		
-		tweet.text = tweet.text.replace(";", ":").replace("==",":").replace(" :", ":");
+		tweet.text = tweet.text.replace(";", ":").replace("==",":").replace("=",":").replace(" :", ":");
 	}
 
 	/**
