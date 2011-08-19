@@ -28,7 +28,7 @@ public class TweetProcessor {
 	
 	public final static Pattern PATTERN_TWEEP = Pattern.compile("@\\w*[\\:|\\.]?\\s?");
 	public final static Pattern PATTERN_HASHTAG = Pattern.compile("(#\\w*[\\:\\.]?\\s?)");
-	private final static Pattern PATTERN_WORD_DEFINITION = Pattern.compile(".*?\\\"?([\\S]*)\\\"?\\:\\s?(.*)");
+	private final static Pattern PATTERN_WORD_DEFINITION = Pattern.compile(".*?\\\"?([\\w]*)\\\"?\\:?\\s?(.*)");
 	
 	private final static Pattern PATTERN_TWEEP_AFTER_RT = Pattern.compile("(.*)?RT.*@(\\w*)");
 
@@ -38,7 +38,10 @@ public class TweetProcessor {
 	
 	@SuppressWarnings("unused")
 	private Map<Long, Tweep> _seenTweeps;
+	private int BOUNCED = 0;
+	private String _before;
 	
+	/** Turn off debugging to start saving the processed data */
 	private final static boolean DEBUG = true;
 	
 	public TweetProcessor() {
@@ -57,7 +60,7 @@ public class TweetProcessor {
 			processTweet(iterator.next());
 			n++;
 		}
-		System.out.println(n);
+		//System.out.println(n);
 	}
 
 	private void processTweet(Tweet tweet) {
@@ -69,6 +72,7 @@ public class TweetProcessor {
 		
 		normalizeTweet(tweet);
 		
+		/** */
 		String potentialAuthor = getPotentialAuthor(tweet);
 		
 		int rtCount = countRTs(tweet);
@@ -79,6 +83,11 @@ public class TweetProcessor {
 		Definition definition = new Definition();
 		
 		extractWordAndDefinition(word_definition_text, word, definition);
+		
+		if (word.word == null) {
+			BOUNCED++;
+			return;
+		}
 		
 		//search for the word
 		Query<Word> wordQuery = _ds.createQuery(Word.class);
@@ -97,6 +106,8 @@ public class TweetProcessor {
 
 	private void saveDefinition(Tweet tweet, int rtCount, Word word,
 			Definition definition) {
+		
+		trySavingTweep(tweet, null, rtCount);
 
 		List<Definition> definitions = word.definitions;
 		
@@ -122,14 +133,7 @@ public class TweetProcessor {
 	public void saveNewWordAndDefinition(Tweet tweet, String potentialAuthor,
 			int rtCount, Word word, Definition definition) {
 		//This looks like it's not the owner of the tweet.
-		if (rtCount == 1) {
-			if (potentialAuthor!=null) {
-				System.out.println("Tweep is potential author -> " + potentialAuthor);
-				tweet.tweep = fetchTweepByName(potentialAuthor);
-			} else {
-				
-			}
-		}
+		trySavingTweep(tweet, potentialAuthor, rtCount);
 		
 		if (tweet.tweep != null) {
 			definition.tweep = tweet.tweep;
@@ -146,7 +150,37 @@ public class TweetProcessor {
 		
 		if (!DEBUG) {
 			_ds.save(word);
+			saveDefinition(tweet, rtCount, word, definition);
 		}
+		
+		
+	}
+
+	public void trySavingTweep(Tweet tweet, String potentialAuthor, int rtCount) {
+		if (rtCount == 1 && potentialAuthor!=null && tweet.tweep == null) {
+			System.out.println("(fetching) Tweep is potential author -> " + potentialAuthor);
+			tweet.tweep = fetchTweepByName(potentialAuthor);
+		}
+		
+		//save this guy if you have to
+		saveTweep(tweet.tweep);
+
+	}
+
+	/**
+	 * Saves it only if it doesn't exist.
+	 * @param tweep
+	 */
+	private void saveTweep(Tweep tweep) {
+		Query<Tweep> query = _ds.createQuery(Tweep.class);
+		List<Tweep> foundTweepLikeThis = query.filter("screen_name",tweep.screen_name).asList();
+		
+		if (foundTweepLikeThis.size() == 0) { // && !DEBUG) {
+		 //gotta save it
+			_ds.save(tweep);
+			System.out.println("Saving tweep @" + tweep.screen_name);
+		}
+		
 	}
 
 	private Tweep fetchTweepByName(String potentialAuthor) {
@@ -180,12 +214,16 @@ public class TweetProcessor {
 		Matcher matcher = PATTERN_WORD_DEFINITION.matcher(text);
 		if (matcher.matches()) {
 			w.word = matcher.group(1).toUpperCase().replaceAll("\\\"", "");
-			d.definition = matcher.group(2).toLowerCase();
 			
-			System.out.println("+ ["+w.word+"] -> ["+d.definition+"]");
-		} else {
-			System.out.println("! " + text);
-		}
+			if (w.word.equals("") || w.word.toLowerCase().indexOf("jaja") >= 0) {
+				//System.out.println("FALSE POSITIVE ON -> ["+text+"]");
+				w.word = null;
+				return;
+			}
+			
+			d.definition = matcher.group(2).toLowerCase();
+			//System.out.println("AFTER ["+w.word+"] -> ["+d.definition+"]\n");
+		} 
 	
 	}
 
@@ -199,8 +237,8 @@ public class TweetProcessor {
 		//Remove whatever reply text there might be
 		
 		String text = new String(tweet.text);
-		
-		System.out.println("BEFORE: [" + text + "]");
+
+		_before = text;
 		
 		if (text.contains("<<")) {
 			text = text.substring(0,text.indexOf("<<"));
@@ -257,7 +295,7 @@ public class TweetProcessor {
 	 */
 	private void normalizeTweet(Tweet tweet) {
 		//make sure the delimitor is right next to the word
-		tweet.text = tweet.text.replace(";", ":").replace("==",":").replace("=",":").replace(" :", ":");
+		tweet.text = tweet.text.replace(";", ":").replace("==",":").replace("=",":").replace("-",":").replace(" :", ":");
 	}
 
 	/**
@@ -280,5 +318,6 @@ public class TweetProcessor {
 	public static void main(String[] arg) {
 		final TweetProcessor PROCESSOR  = new TweetProcessor();
 		PROCESSOR.processTweets();
+		//System.out.println("BOUNCED TWEETS: " + PROCESSOR.BOUNCED);
 	}
 }
