@@ -42,7 +42,7 @@ public class TweetProcessor {
 	private String _before;
 	
 	/** Turn off debugging to start saving the processed data */
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 	
 	public TweetProcessor() {
 		_ds = MongoMapper.instance().getDatastore();
@@ -107,6 +107,10 @@ public class TweetProcessor {
 	private void saveDefinition(Tweet tweet, int rtCount, Word word,
 			Definition definition) {
 		
+		if (word.word == null) {
+			return;
+		}
+		
 		trySavingTweep(tweet, null, rtCount);
 
 		List<Definition> definitions = word.definitions;
@@ -125,15 +129,25 @@ public class TweetProcessor {
 			}
 		}
 		
-		if (!DEBUG) {
-			_ds.save(word);
-		}
+		saveWord(tweet, word);
 	}
 
+	/**
+	 * Used for a new word that has only 1 definition.
+	 * @param tweet
+	 * @param potentialAuthor
+	 * @param rtCount
+	 * @param word
+	 * @param definition
+	 */
 	public void saveNewWordAndDefinition(Tweet tweet, String potentialAuthor,
 			int rtCount, Word word, Definition definition) {
 		//This looks like it's not the owner of the tweet.
-		trySavingTweep(tweet, potentialAuthor, rtCount);
+		trySavingTweep(tweet, potentialAuthor, rtCount);		
+		
+		if (word.word == null) {
+			return;
+		}
 		
 		if (tweet.tweep != null) {
 			definition.tweep = tweet.tweep;
@@ -148,12 +162,21 @@ public class TweetProcessor {
 		
 		word.definitions = Arrays.asList(definition);
 		
-		if (!DEBUG) {
+		saveWord(tweet, word);
+	}
+
+	/**
+	 * Marks the tweet as processed and saves the word (and the tweet so we don't process it again)
+	 * @param tweet
+	 * @param word
+	 */
+	private void saveWord(Tweet tweet, Word word) {
+		if (!DEBUG && !tweet.processed && word.word != null) {
+			//saves recursively
+			tweet.processed = true;
+			_ds.save(tweet);
 			_ds.save(word);
-			saveDefinition(tweet, rtCount, word, definition);
 		}
-		
-		
 	}
 
 	public void trySavingTweep(Tweet tweet, String potentialAuthor, int rtCount) {
@@ -164,7 +187,6 @@ public class TweetProcessor {
 		
 		//save this guy if you have to
 		saveTweep(tweet.tweep);
-
 	}
 
 	/**
@@ -223,8 +245,7 @@ public class TweetProcessor {
 			
 			d.definition = matcher.group(2).toLowerCase();
 			//System.out.println("AFTER ["+w.word+"] -> ["+d.definition+"]\n");
-		} 
-	
+		}
 	}
 
 	/**
