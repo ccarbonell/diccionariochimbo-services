@@ -30,7 +30,8 @@ public class TweetProcessor {
 	public final static Pattern PATTERN_HASHTAG = Pattern.compile("(#\\w*[\\:\\.]?\\s?)");
 	private final static Pattern PATTERN_WORD_DEFINITION = Pattern.compile(".*?\\\"?([\\w]*)\\\"?\\:?\\s?(.*)");
 	
-	private final static Pattern PATTERN_TWEEP_AFTER_RT = Pattern.compile("(.*)?RT.*@(\\w*)");
+	private final static Pattern PATTERN_COUNT_RTS = Pattern.compile("RT ");
+	private final static Pattern PATTERN_TWEEP_AFTER_RT = Pattern.compile("^RT.@(\\w*).*");
 
 	private Datastore _ds;
 	
@@ -62,7 +63,30 @@ public class TweetProcessor {
 		}
 		//System.out.println(n);
 	}
+	
+	/**
+	 * Deletes all the Words and marks all fetched Tweets as unprocessed.
+	 */
+	public void resetProcessedTweets() {
+		//delete all words.
+		_ds.delete(_ds.createQuery(Word.class));
 
+		//make all tweets unprocessed.
+		Query<Tweet> q = _ds.createQuery(Tweet.class);
+		
+		Iterator<Tweet> iterator = q.iterator();
+		
+		while (iterator.hasNext()) {
+			try {
+				Tweet tweet = iterator.next();
+				tweet.processed = false;
+				_ds.save(tweet);
+			} catch(Exception e) {
+				//keep going.
+			}
+		}
+	}
+	
 	private void processTweet(Tweet tweet) {
 		if (!hasKnownWordDelimiters(tweet.text)) {
 			System.out.println("!! DELETED " + tweet.text);
@@ -72,7 +96,8 @@ public class TweetProcessor {
 		
 		normalizeTweet(tweet);
 		
-		/** */
+		/** Could be of use in case we missed an original tweet, or the RTer was kind
+		 * enough to add the #DiccionarioChimbo hashtag so we could process it. */
 		String potentialAuthor = getPotentialAuthor(tweet);
 		
 		int rtCount = countRTs(tweet);
@@ -142,12 +167,14 @@ public class TweetProcessor {
 	 */
 	public void saveNewWordAndDefinition(Tweet tweet, String potentialAuthor,
 			int rtCount, Word word, Definition definition) {
+		
 		//This looks like it's not the owner of the tweet.
 		trySavingTweep(tweet, potentialAuthor, rtCount);		
 		
 		if (word.word == null) {
 			return;
 		}
+		
 		
 		if (tweet.tweep != null) {
 			definition.tweep = tweet.tweep;
@@ -180,13 +207,51 @@ public class TweetProcessor {
 	}
 
 	public void trySavingTweep(Tweet tweet, String potentialAuthor, int rtCount) {
-		if (rtCount == 1 && potentialAuthor!=null && tweet.tweep == null) {
-			System.out.println("(fetching) Tweep is potential author -> " + potentialAuthor);
-			tweet.tweep = fetchTweepByName(potentialAuthor);
+		
+		Tweep tweepFromDB = null;
+		
+		if (rtCount == 1 && potentialAuthor!=null) {
+			
+			//we have a different potential author that's not whoever tweeted the tweet.
+			if (tweet.tweep!= null && !tweet.tweep.screen_name.equals(potentialAuthor)) {
+				//first try to fetch the potential author from the DB in case we already got him
+				
+				tweepFromDB = getTweepByName(potentialAuthor);
+				
+				if (tweepFromDB == null) {
+					System.out.println("(fetching) Tweep is potential author -> " + potentialAuthor);
+					tweet.tweep = fetchTweepByName(potentialAuthor);
+				} else {
+					tweet.tweep = tweepFromDB;
+				}
+			}
 		}
 		
-		//save this guy if you have to
-		saveTweep(tweet.tweep);
+		//save this guy if you can/have to
+		if (tweet.tweep != null) {
+			//do we have him already?
+			if (tweepFromDB == null && tweet.tweep != null) {
+				tweepFromDB = getTweepByName(tweet.tweep.screen_name);
+			}
+			
+			if (tweepFromDB == null) {
+				System.out.println("Saving new Tweep: " + tweet.tweep);
+				saveTweep(tweet.tweep);
+			}
+		} else {
+			System.out.println("No tweep to save.");
+		}
+
+	}
+
+	/** Tries to fetch a Tweep from the DB using the screen_name */
+	private Tweep getTweepByName(String potentialAuthor) {
+		List<Tweep> tweep = _ds.createQuery(Tweep.class).filter("screen_name",potentialAuthor).asList();
+		if (tweep.size()==0) {
+			return null;
+		}
+		
+		return tweep.get(0);
 	}
 
 	/**
@@ -299,11 +364,26 @@ public class TweetProcessor {
 	private String getPotentialAuthor(Tweet tweet) {
 		//If it's a RT, then the author is not tweet.tweep.
 		if (tweet.text.contains("RT")) {
+			
+			//count how many RTs there are
+			Matcher rtCountMatcher = PATTERN_COUNT_RTS.matcher(tweet.text);
+			int rtCount = 0;
+			
+			while (rtCountMatcher.find()) {
+				rtCount++;
+			}
+			
 			//get the nickname right after RT
 			Matcher matcher = PATTERN_TWEEP_AFTER_RT.matcher(tweet.text);
-			if (matcher.matches()) {
-				String group1 = matcher.group(1);
-				String group2 = matcher.group(2);
+			if (matcher.matches() && rtCount == 1) {
+				String author = matcher.group(1);
+				
+//				System.out.println(tweet.text);
+//				System.out.println("@" + author);
+//				System.out.println();
+				return author;
+			} else {
+				return null;
 			}
 			
 		}
@@ -315,7 +395,7 @@ public class TweetProcessor {
 	 * @param tweet
 	 */
 	private void normalizeTweet(Tweet tweet) {
-		//make sure the delimitor is right next to the word
+		//make sure the delimiter is right next to the word
 		tweet.text = tweet.text.replace(";", ":").replace("==",":").replace("=",":").replace("-",":").replace(" :", ":");
 	}
 
@@ -338,7 +418,9 @@ public class TweetProcessor {
 
 	public static void main(String[] arg) {
 		final TweetProcessor PROCESSOR  = new TweetProcessor();
+		PROCESSOR.resetProcessedTweets();
 		PROCESSOR.processTweets();
+		
 		//System.out.println("BOUNCED TWEETS: " + PROCESSOR.BOUNCED);
 	}
 }
