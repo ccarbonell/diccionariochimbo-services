@@ -126,6 +126,7 @@ public class TweetProcessor {
 			saveDefinition(tweet,rtCount,word,definition);
 		}
 		
+		//TODO: Scoring.
 		//System.out.println(tweet.text);
 	}
 
