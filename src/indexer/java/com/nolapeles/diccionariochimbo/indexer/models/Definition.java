@@ -25,14 +25,16 @@ public class Definition {
 	public int numFails;
 
 	@Reference
-	public Tweep tweep;
+	public Tweep tweepAuthor;
 
 	@Transient
 	public final static int RT_POINTS = 10;
 	
+	/** TODO I'm thinking of removing this */
 	@Transient
 	public final static int WIN_POINTS = 5;
 	
+	/** TODO I'm thinking of removing this */
 	@Transient
 	public final static int FAIL_POINTS = -4;
 

@@ -30,8 +30,14 @@ public class Tweep {
 	public String location;
 	public String profile_image_url;
 	
+	/** Points gained for RT other people's definitions */
 	public int social_score;
+	
+	/** Points gained for authorship */
 	public int content_score;
+	
+	/** Bonus points for special events, like not just adding
+	 * a definition but also being the first to add that definition */
 	public int bonus_score;
 	
 	@Override

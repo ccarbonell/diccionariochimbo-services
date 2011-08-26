@@ -96,14 +96,14 @@ public class MongoMapper {
 		w1.word = "PABELLON";
 		
 		Definition d1 = new Definition();
-		d1.tweep = t1;
+		d1.tweepAuthor = t1;
 		d1.definition = "Lo que le dijo Paul a John";
 		d1.indexed_date = System.currentTimeMillis();
 		d1.numFails = 0;
 		d1.numWins = 5;
 
 		Definition d2 = new Definition();
-		d2.tweep = t2;
+		d2.tweepAuthor = t2;
 		d2.definition = "Para alguien muy grande que es bello.";
 		d2.indexed_date = System.currentTimeMillis();
 		d2.numFails = 9;
@@ -117,7 +117,7 @@ public class MongoMapper {
 		w2.word = "VENTILADOR";
 		
 		Definition d3 = new Definition();
-		d3.tweep = t2;
+		d3.tweepAuthor = t2;
 		d3.definition = "Lo que una prostituta le dice a un cliente cachondo.";
 		
 		w2.definitions = Arrays.asList(d3);
