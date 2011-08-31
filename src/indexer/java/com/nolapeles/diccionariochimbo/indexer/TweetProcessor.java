@@ -252,11 +252,15 @@ public class TweetProcessor {
 			definition.tweepAuthor = tweet.tweep;
 		} else if (rtCount > 0) {
 			// we have a new word that we've only seen in the form of a RT.
-			if (!tweet.tweep.screen_name.equals(definitionAuthorScreenName)) {
-				getTweepByName(definitionAuthorScreenName);
+			if (tweet.tweep==null ||
+				!tweet.tweep.screen_name.equals(definitionAuthorScreenName)) {
+				definition.tweepAuthor=getTweepByName(definitionAuthorScreenName);
+				
+				if (tweet.tweep == null && definition.tweepAuthor!=null) {
+					tweet.tweep = definition.tweepAuthor;
+				}
 			}
 		}
-
 	}
 
 	/** Generic way of searching for a single Object in Mongo */
@@ -309,6 +313,7 @@ public class TweetProcessor {
 
 		try {
 			User user = _twitter.showUser(potentialAuthor);
+
 			tweep = new Tweep();
 			tweep.location = user.getLocation();
 			tweep.profile_image_url = user.getProfileImageURL().toString();
@@ -317,7 +322,7 @@ public class TweetProcessor {
 			cacheTweep(tweep);
 			
 		} catch (TwitterException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 
 		return tweep;
