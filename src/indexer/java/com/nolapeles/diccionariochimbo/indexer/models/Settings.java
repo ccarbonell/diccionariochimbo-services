@@ -7,7 +7,7 @@ import org.bson.types.ObjectId;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.NotSaved;
-import com.nolapeles.diccionariochimbo.indexer.MongoMapper;
+import com.nolapeles.diccionariochimbo.services.MongoMapper;
 
 /**
  * This will be saved as a single object which will basically serve as a map to save settings for the application.

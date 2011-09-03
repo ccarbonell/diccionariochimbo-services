@@ -7,7 +7,7 @@ import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Indexed;
 import com.google.code.morphia.annotations.Reference;
 import com.google.code.morphia.annotations.Transient;
-import com.nolapeles.diccionariochimbo.indexer.IndexerConstants;
+import com.nolapeles.diccionariochimbo.services.IndexerConstants;
 
 @Entity
 public class Definition {
