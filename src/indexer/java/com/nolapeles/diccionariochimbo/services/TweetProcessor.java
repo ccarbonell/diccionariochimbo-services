@@ -15,10 +15,10 @@ import twitter4j.User;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
-import com.nolapeles.diccionariochimbo.indexer.models.Definition;
-import com.nolapeles.diccionariochimbo.indexer.models.Tweep;
-import com.nolapeles.diccionariochimbo.indexer.models.Tweet;
-import com.nolapeles.diccionariochimbo.indexer.models.Word;
+import com.nolapeles.diccionariochimbo.models.Definition;
+import com.nolapeles.diccionariochimbo.models.Tweep;
+import com.nolapeles.diccionariochimbo.models.Tweet;
+import com.nolapeles.diccionariochimbo.models.Word;
 
 /*
  * Class to process stored tweets into Word, Definitions and scores for players.

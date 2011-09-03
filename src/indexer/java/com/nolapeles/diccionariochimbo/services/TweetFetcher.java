@@ -13,8 +13,8 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 
 import com.google.code.morphia.Datastore;
-import com.nolapeles.diccionariochimbo.indexer.models.Settings;
-import com.nolapeles.diccionariochimbo.indexer.models.Tweep;
+import com.nolapeles.diccionariochimbo.models.Settings;
+import com.nolapeles.diccionariochimbo.models.Tweep;
 
 /**
  * Fetches all tweets tagged #DiccionarioChimbo and stores them.
@@ -28,7 +28,7 @@ public class TweetFetcher {
 	private Datastore _ds;
 
 	/** Where we'll keep the tweets (models) that'll be saved */
-	private List<com.nolapeles.diccionariochimbo.indexer.models.Tweet> _modelTweets;
+	private List<com.nolapeles.diccionariochimbo.models.Tweet> _modelTweets;
 
 	/**
 	 * We'll keep a cache of users that we have already in the database. If we
@@ -40,7 +40,7 @@ public class TweetFetcher {
 	private Query _query;
 
 	public TweetFetcher() {
-		_modelTweets = new ArrayList<com.nolapeles.diccionariochimbo.indexer.models.Tweet>();
+		_modelTweets = new ArrayList<com.nolapeles.diccionariochimbo.models.Tweet>();
 		_seenTweeps = new HashMap<Long, Tweep>();
 		_twitter = new TwitterFactory().getInstance();
 		_ds = MongoMapper.instance().getDatastore();
@@ -107,7 +107,7 @@ public class TweetFetcher {
 			}
 
 			for (Tweet t : pageTweets) {
-				com.nolapeles.diccionariochimbo.indexer.models.Tweet tweet = new com.nolapeles.diccionariochimbo.indexer.models.Tweet();
+				com.nolapeles.diccionariochimbo.models.Tweet tweet = new com.nolapeles.diccionariochimbo.models.Tweet();
 				tweet.text = t.getText();
 				tweet.tweet_id = t.getId();
 				tweet.processed = false;

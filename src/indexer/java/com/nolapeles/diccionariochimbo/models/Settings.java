@@ -1,4 +1,4 @@
-package com.nolapeles.diccionariochimbo.indexer.models;
+package com.nolapeles.diccionariochimbo.models;
 
 import java.util.List;
 
