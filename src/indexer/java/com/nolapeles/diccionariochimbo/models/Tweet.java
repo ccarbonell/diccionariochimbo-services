@@ -23,6 +23,8 @@ public class Tweet {
 
 	public boolean processed;
 	
+	public long processed_date;
+	
 	@Reference
 	public Tweep tweep;
 	

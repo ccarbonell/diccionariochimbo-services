@@ -15,7 +15,7 @@ import com.google.code.morphia.annotations.Transient;
 @Entity
 public class Word {
 	@Id 
-	private ObjectId id;
+	public ObjectId id;
 	
 	@Indexed
 	public String word;

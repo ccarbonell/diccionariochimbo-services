@@ -10,6 +10,7 @@ import com.google.code.morphia.Morphia;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.nolapeles.diccionariochimbo.models.Definition;
+import com.nolapeles.diccionariochimbo.models.RTEntry;
 import com.nolapeles.diccionariochimbo.models.Settings;
 import com.nolapeles.diccionariochimbo.models.Tweep;
 import com.nolapeles.diccionariochimbo.models.Word;
@@ -57,7 +58,9 @@ public class MongoMapper {
 		_morphia.map(Definition.class);
 		_morphia.map(Word.class);		
 		_morphia.map(Settings.class);
+		_morphia.map(RTEntry.class);
 		
+		//TODO:  programatically map all model classes   
 
 	}
 	

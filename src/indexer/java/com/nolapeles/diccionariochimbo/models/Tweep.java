@@ -19,7 +19,7 @@ import com.google.code.morphia.annotations.Indexed;
 @Entity
 public class Tweep {
 	@Id 
-	private ObjectId id;
+	public ObjectId id;
 	
 	@Indexed
 	public String screen_name;
@@ -47,5 +47,16 @@ public class Tweep {
 			",\n\tlocation: "+location+
 			",\n\tprofile_image_url: "+profile_image_url+"}";		
 	}
-
+	
+	@Override
+	public boolean equals(Object obj) {
+		Tweep other = (Tweep) obj;
+		return other.user_id == this.user_id;
+	}
+	
+	@Override
+	public int hashCode() {
+		return (int) this.user_id;
+	}
+	
 }

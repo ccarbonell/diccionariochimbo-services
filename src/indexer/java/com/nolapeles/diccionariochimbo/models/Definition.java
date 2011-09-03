@@ -1,5 +1,7 @@
 package com.nolapeles.diccionariochimbo.models;
 
+import java.util.Set;
+
 import org.bson.types.ObjectId;
 
 import com.google.code.morphia.annotations.Entity;
@@ -12,7 +14,7 @@ import com.nolapeles.diccionariochimbo.services.IndexerConstants;
 @Entity
 public class Definition {
 	@Id 
-	private ObjectId id;
+	public ObjectId id;
 	
 	@Indexed
 	public String definition;
@@ -26,6 +28,7 @@ public class Definition {
 
 	@Reference
 	public Tweep tweepAuthor;
+	public Set<RTEntry> rts;
 
 	@Transient
 	public final static int RT_POINTS = 10;

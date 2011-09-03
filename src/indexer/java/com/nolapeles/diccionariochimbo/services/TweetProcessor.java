@@ -2,6 +2,7 @@ package com.nolapeles.diccionariochimbo.services;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import twitter4j.User;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.nolapeles.diccionariochimbo.models.Definition;
+import com.nolapeles.diccionariochimbo.models.RTEntry;
 import com.nolapeles.diccionariochimbo.models.Tweep;
 import com.nolapeles.diccionariochimbo.models.Tweet;
 import com.nolapeles.diccionariochimbo.models.Word;
@@ -203,11 +205,15 @@ public class TweetProcessor {
 					Definition oldDefinition = definitions.get(definitions
 							.indexOf(definition));
 
-					// OPEN TO CHEATING HERE...(add an if() later)
-					// to avoid an user from tweeting the same definition over
-					// and over...
-					// we only count the retweet if the author != tweep
-					oldDefinition.numRetweets++;
+					if (oldDefinition.rts == null || oldDefinition.rts.size() == 0){
+						oldDefinition.rts = new HashSet<RTEntry>();
+					}
+					
+					RTEntry entry = new RTEntry(tweet);
+					oldDefinition.rts.add(entry);
+					
+					oldDefinition.numRetweets = oldDefinition.rts.size();
+					
 					
 					//TODO: Not sure if adding here
 					//social points for the person that RTed.
@@ -287,6 +293,7 @@ public class TweetProcessor {
 		if (!DEBUG && !tweet.processed && word.word != null) {
 			// saves recursively
 			tweet.processed = true;
+			tweet.processed_date = System.nanoTime();
 			_ds.save(tweet);
 			_ds.save(word);
 		}
@@ -522,7 +529,7 @@ public class TweetProcessor {
 	 * @return
 	 */
 	private boolean hasKnownWordDelimiters(String text) {
-		return text.contains(":") || text.contains("==") || text.contains(";");
+		return text.contains(":") || text.contains("==") || text.contains(";") || text.contains("=>");
 	}
 
 	public static void main(String[] arg) {
